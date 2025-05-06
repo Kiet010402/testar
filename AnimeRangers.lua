@@ -2281,3 +2281,1012 @@ Window:Notify({
     Description = "Script đã được khởi động thành công!",
     Lifetime = 5
 }) 
+
+-- Play Tab: Challenge Section
+sections.ChallengeSection:Header({
+    Name = "Challenge"
+})
+
+-- Hàm tham gia Challenge
+local function joinChallenge()
+    -- Kiểm tra xem người chơi đã ở trong map chưa
+    if isPlayerInMap() then
+        print("Đã phát hiện người chơi đang ở trong map, không thực hiện join Challenge")
+        return false
+    end
+    
+    local success, err = pcall(function()
+        -- Lấy Event
+        local Event = safeGetPath(game:GetService("ReplicatedStorage"), {"Remote", "Server", "PlayRoom", "Event"}, 2)
+        
+        if not Event then
+            warn("Không tìm thấy Event để tham gia Challenge")
+            return
+        end
+        
+        -- Gọi Challenge
+        local args = {
+            [1] = "Challenge"
+        }
+        
+        Event:FireServer(unpack(args))
+        print("Đã gửi yêu cầu tham gia Challenge")
+    end)
+    
+    if not success then
+        warn("Lỗi khi tham gia Challenge: " .. tostring(err))
+        return false
+    end
+    
+    return true
+end
+
+-- Toggle Auto Challenge
+sections.ChallengeSection:Toggle({
+    Name = "Auto Challenge",
+    Default = ConfigSystem.CurrentConfig.AutoChallenge or false,
+    Callback = function(Value)
+        autoChallengeEnabled = Value
+        ConfigSystem.CurrentConfig.AutoChallenge = Value
+        ConfigSystem.SaveConfig()
+        
+        if autoChallengeEnabled then
+            print("Auto Challenge đã được bật")
+            
+            -- Kiểm tra ngay lập tức nếu người chơi đang ở trong map
+            if isPlayerInMap() then
+                print("Đang ở trong map, Auto Challenge sẽ hoạt động khi bạn rời khỏi map")
+            else
+                print("Auto Challenge sẽ bắt đầu sau " .. challengeTimeDelay .. " giây")
+                
+                -- Thực hiện tham gia Challenge sau thời gian delay
+                spawn(function()
+                    wait(challengeTimeDelay) -- Chờ theo time delay đã đặt
+                    if autoChallengeEnabled and not isPlayerInMap() then
+                        joinChallenge()
+                    end
+                end)
+            end
+            
+            -- Tạo vòng lặp Auto Challenge
+            spawn(function()
+                while autoChallengeEnabled and wait(10) do -- Thử tham gia mỗi 10 giây
+                    -- Chỉ thực hiện tham gia nếu người chơi không ở trong map
+                    if not isPlayerInMap() then
+                        -- Áp dụng time delay
+                        print("Đợi " .. challengeTimeDelay .. " giây trước khi tham gia Challenge")
+                        wait(challengeTimeDelay)
+                        
+                        -- Kiểm tra lại sau khi delay
+                        if autoChallengeEnabled and not isPlayerInMap() then
+                            joinChallenge()
+                        end
+                    else
+                        -- Người chơi đang ở trong map, không cần tham gia
+                        print("Đang ở trong map, đợi đến khi người chơi rời khỏi map")
+                    end
+                end
+            end)
+        else
+            print("Auto Challenge đã được tắt")
+        end
+    end
+}, "AutoChallengeToggle")
+
+-- Input cho Challenge Time Delay
+sections.ChallengeSection:Input({
+    Name = "Challenge Time Delay (1-30s)",
+    Placeholder = "Nhập delay",
+    Default = tostring(challengeTimeDelay),
+    Callback = function(Value)
+        local numValue = tonumber(Value)
+        if numValue and numValue >= 1 and numValue <= 30 then
+            challengeTimeDelay = numValue
+            ConfigSystem.CurrentConfig.ChallengeTimeDelay = numValue
+            ConfigSystem.SaveConfig()
+            print("Đã đặt Challenge Time Delay: " .. numValue .. " giây")
+        else
+            print("Giá trị delay không hợp lệ (1-30)")
+            Window:Notify({
+                Title = "Lỗi",
+                Description = "Giá trị delay không hợp lệ (1-30)",
+                Lifetime = 3
+            })
+        end
+    end
+}, "ChallengeTimeDelayInput")
+
+-- Nút Join Challenge Now (thủ công)
+sections.ChallengeSection:Button({
+    Name = "Join Challenge Now",
+    Callback = function()
+        -- Kiểm tra nếu người chơi đang ở trong map
+        if isPlayerInMap() then
+            Window:Notify({
+                Title = "Lỗi",
+                Description = "Bạn đang ở trong map, không thể tham gia Challenge mới",
+                Lifetime = 3
+            })
+            return
+        end
+        
+        print("Đang tham gia Challenge...")
+        joinChallenge()
+    end
+})
+
+-- Play Tab: Boss Event Section
+sections.BossEventSection:Header({
+    Name = "Boss Event"
+})
+
+-- Hàm tham gia Boss Event
+local function joinBossEvent()
+    -- Kiểm tra xem người chơi đã ở trong map chưa
+    if isPlayerInMap() then
+        print("Đã phát hiện người chơi đang ở trong map, không thực hiện join Boss Event")
+        return false
+    end
+    
+    local success, err = pcall(function()
+        -- Lấy Event
+        local Event = safeGetPath(game:GetService("ReplicatedStorage"), {"Remote", "Server", "PlayRoom", "Event"}, 2)
+        
+        if not Event then
+            warn("Không tìm thấy Event để tham gia Boss Event")
+            return
+        end
+        
+        -- Gọi Boss
+        local args = {
+            [1] = "Boss"
+        }
+        
+        Event:FireServer(unpack(args))
+        print("Đã gửi yêu cầu tham gia Boss Event")
+    end)
+    
+    if not success then
+        warn("Lỗi khi tham gia Boss Event: " .. tostring(err))
+        return false
+    end
+    
+    return true
+end
+
+-- Toggle Auto Boss Event
+sections.BossEventSection:Toggle({
+    Name = "Auto Boss Event",
+    Default = ConfigSystem.CurrentConfig.AutoBossEvent or false,
+    Callback = function(Value)
+        autoBossEventEnabled = Value
+        ConfigSystem.CurrentConfig.AutoBossEvent = Value
+        ConfigSystem.SaveConfig()
+        
+        if autoBossEventEnabled then
+            print("Auto Boss Event đã được bật")
+            
+            -- Kiểm tra ngay lập tức nếu người chơi đang ở trong map
+            if isPlayerInMap() then
+                print("Đang ở trong map, Auto Boss Event sẽ hoạt động khi bạn rời khỏi map")
+            else
+                print("Auto Boss Event sẽ bắt đầu sau " .. bossEventTimeDelay .. " giây")
+                
+                -- Thực hiện tham gia Boss Event sau thời gian delay
+                spawn(function()
+                    wait(bossEventTimeDelay) -- Chờ theo time delay đã đặt
+                    if autoBossEventEnabled and not isPlayerInMap() then
+                        joinBossEvent()
+                    end
+                end)
+            end
+            
+            -- Tạo vòng lặp Auto Boss Event
+            spawn(function()
+                while autoBossEventEnabled and wait(10) do -- Thử tham gia mỗi 10 giây
+                    -- Chỉ thực hiện tham gia nếu người chơi không ở trong map
+                    if not isPlayerInMap() then
+                        -- Áp dụng time delay
+                        print("Đợi " .. bossEventTimeDelay .. " giây trước khi tham gia Boss Event")
+                        wait(bossEventTimeDelay)
+                        
+                        -- Kiểm tra lại sau khi delay
+                        if autoBossEventEnabled and not isPlayerInMap() then
+                            joinBossEvent()
+                        end
+                    else
+                        -- Người chơi đang ở trong map, không cần tham gia
+                        print("Đang ở trong map, đợi đến khi người chơi rời khỏi map")
+                    end
+                end
+            end)
+        else
+            print("Auto Boss Event đã được tắt")
+        end
+    end
+}, "AutoBossEventToggle")
+
+-- Input cho Boss Event Time Delay
+sections.BossEventSection:Input({
+    Name = "Boss Event Time Delay (1-30s)",
+    Placeholder = "Nhập delay",
+    Default = tostring(bossEventTimeDelay),
+    Callback = function(Value)
+        local numValue = tonumber(Value)
+        if numValue and numValue >= 1 and numValue <= 30 then
+            bossEventTimeDelay = numValue
+            ConfigSystem.CurrentConfig.BossEventTimeDelay = numValue
+            ConfigSystem.SaveConfig()
+            print("Đã đặt Boss Event Time Delay: " .. numValue .. " giây")
+        else
+            print("Giá trị delay không hợp lệ (1-30)")
+            Window:Notify({
+                Title = "Lỗi",
+                Description = "Giá trị delay không hợp lệ (1-30)",
+                Lifetime = 3
+            })
+        end
+    end
+}, "BossEventTimeDelayInput")
+
+-- Nút Join Boss Event Now (thủ công)
+sections.BossEventSection:Button({
+    Name = "Join Boss Event Now",
+    Callback = function()
+        -- Kiểm tra nếu người chơi đang ở trong map
+        if isPlayerInMap() then
+            Window:Notify({
+                Title = "Lỗi",
+                Description = "Bạn đang ở trong map, không thể tham gia Boss Event mới",
+                Lifetime = 3
+            })
+            return
+        end
+        
+        print("Đang tham gia Boss Event...")
+        joinBossEvent()
+    end
+})
+
+-- In-Game Tab: In-Game Section
+sections.InGameSection:Header({
+    Name = "In-Game Controls"
+})
+
+-- Hàm để bật/tắt auto play
+local function toggleAutoPlay(enabled)
+    local success, err = pcall(function()
+        -- Lấy Remote cho Auto Play
+        local Remote = safeGetPath(game:GetService("ReplicatedStorage"), {"Remote", "Server", "Gameplay", "AFK"}, 2)
+        
+        if not Remote then
+            warn("Không tìm thấy Remote cho Auto Play")
+            return
+        end
+        
+        -- Gửi yêu cầu bật/tắt
+        local args = {
+            [1] = enabled and "On" or "Off"
+        }
+        
+        Remote:FireServer(unpack(args))
+        print("Đã " .. (enabled and "bật" or "tắt") .. " Auto Play")
+    end)
+    
+    if not success then
+        warn("Lỗi khi bật/tắt Auto Play: " .. tostring(err))
+    end
+end
+
+-- Hàm để auto retry
+local function performAutoRetry()
+    local success, err = pcall(function()
+        -- Kiểm tra xem người chơi có đang ở trong map không
+        if not isPlayerInMap() then
+            return
+        end
+        
+        -- Kiểm tra xem có UI kết quả không
+        local PlayerGui = game:GetService("Players").LocalPlayer:FindFirstChild("PlayerGui")
+        if not PlayerGui then
+            return
+        end
+        
+        local ResultUI = PlayerGui:FindFirstChild("ResultGui")
+        if not ResultUI or not ResultUI.Enabled then
+            return
+        end
+        
+        -- Lấy Remote cho Retry
+        local Remote = safeGetPath(game:GetService("ReplicatedStorage"), {"Remote", "Server", "Gameplay", "RetryEvent"}, 2)
+        
+        if not Remote then
+            warn("Không tìm thấy Remote cho Retry")
+            return
+        end
+        
+        -- Gửi yêu cầu retry
+        Remote:FireServer()
+        print("Đã thực hiện Auto Retry")
+    end)
+    
+    if not success then
+        warn("Lỗi khi thực hiện Auto Retry: " .. tostring(err))
+    end
+end
+
+-- Hàm để auto next
+local function performAutoNext()
+    local success, err = pcall(function()
+        -- Kiểm tra xem người chơi có đang ở trong map không
+        if not isPlayerInMap() then
+            return
+        end
+        
+        -- Kiểm tra xem có UI kết quả không
+        local PlayerGui = game:GetService("Players").LocalPlayer:FindFirstChild("PlayerGui")
+        if not PlayerGui then
+            return
+        end
+        
+        local ResultUI = PlayerGui:FindFirstChild("ResultGui")
+        if not ResultUI or not ResultUI.Enabled then
+            return
+        end
+        
+        -- Lấy Remote cho Next
+        local Remote = safeGetPath(game:GetService("ReplicatedStorage"), {"Remote", "Server", "Gameplay", "NextEvent"}, 2)
+        
+        if not Remote then
+            warn("Không tìm thấy Remote cho Next")
+            return
+        end
+        
+        -- Gửi yêu cầu next
+        Remote:FireServer()
+        print("Đã thực hiện Auto Next")
+    end)
+    
+    if not success then
+        warn("Lỗi khi thực hiện Auto Next: " .. tostring(err))
+    end
+end
+
+-- Hàm để auto vote MVP
+local function performAutoVote()
+    local success, err = pcall(function()
+        -- Kiểm tra xem người chơi có đang ở trong map không
+        if not isPlayerInMap() then
+            return
+        end
+        
+        -- Kiểm tra xem có UI vote MVP không
+        local PlayerGui = game:GetService("Players").LocalPlayer:FindFirstChild("PlayerGui")
+        if not PlayerGui then
+            return
+        end
+        
+        local VoteUI = PlayerGui:FindFirstChild("VoteGui")
+        if not VoteUI or not VoteUI.Enabled then
+            return
+        end
+        
+        -- Lấy Remote cho Vote
+        local Remote = safeGetPath(game:GetService("ReplicatedStorage"), {"Remote", "Server", "Gameplay", "MVPEvent"}, 2)
+        
+        if not Remote then
+            warn("Không tìm thấy Remote cho Vote MVP")
+            return
+        end
+        
+        -- Lấy danh sách người chơi để vote
+        local players = game:GetService("Players"):GetPlayers()
+        
+        -- Chọn người chơi đầu tiên (hoặc bản thân)
+        local targetPlayer = game:GetService("Players").LocalPlayer
+        
+        -- Gửi yêu cầu vote
+        local args = {
+            [1] = targetPlayer
+        }
+        
+        Remote:FireServer(unpack(args))
+        print("Đã thực hiện Auto Vote MVP cho " .. targetPlayer.Name)
+    end)
+    
+    if not success then
+        warn("Lỗi khi thực hiện Auto Vote MVP: " .. tostring(err))
+    end
+end
+
+-- Hàm để remove animation
+local function removeAnimation()
+    local success, err = pcall(function()
+        -- Lấy danh sách các animation trong game
+        local animations = {}
+        
+        -- Tìm animation controller của nhân vật người chơi
+        local player = game:GetService("Players").LocalPlayer
+        if not player.Character then
+            return
+        end
+        
+        local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
+        if not humanoid then
+            return
+        end
+        
+        local animator = humanoid:FindFirstChildOfClass("Animator")
+        if not animator then
+            return
+        end
+        
+        -- Dừng tất cả các animation đang chạy
+        for _, track in pairs(animator:GetPlayingAnimationTracks()) do
+            track:Stop()
+            table.insert(animations, track)
+        end
+        
+        -- Disable animator
+        animator.Parent = nil
+        
+        -- Tìm và xóa các animation trong workspace
+        for _, v in pairs(workspace:GetDescendants()) do
+            if v:IsA("AnimationController") then
+                v:Destroy()
+            end
+        end
+        
+        print("Đã xóa " .. #animations .. " animation")
+    end)
+    
+    if not success then
+        warn("Lỗi khi xóa animation: " .. tostring(err))
+    end
+end
+
+-- Toggle Auto Play
+sections.InGameSection:Toggle({
+    Name = "Auto Play",
+    Default = ConfigSystem.CurrentConfig.AutoPlay or false,
+    Callback = function(Value)
+        autoPlayEnabled = Value
+        ConfigSystem.CurrentConfig.AutoPlay = Value
+        ConfigSystem.SaveConfig()
+        
+        -- Gửi lệnh bật/tắt auto play
+        toggleAutoPlay(Value)
+        
+        if Value then
+            print("Auto Play đã được bật")
+        else
+            print("Auto Play đã được tắt")
+        end
+    end
+}, "AutoPlayToggle")
+
+-- Toggle Auto Retry
+sections.InGameSection:Toggle({
+    Name = "Auto Retry",
+    Default = ConfigSystem.CurrentConfig.AutoRetry or false,
+    Callback = function(Value)
+        autoRetryEnabled = Value
+        ConfigSystem.CurrentConfig.AutoRetry = Value
+        ConfigSystem.SaveConfig()
+        
+        if autoRetryEnabled then
+            print("Auto Retry đã được bật")
+            
+            -- Tạo vòng lặp để kiểm tra và retry
+            spawn(function()
+                while autoRetryEnabled and wait(1) do
+                    -- Kiểm tra xem người chơi có đang ở trong map không
+                    if isPlayerInMap() then
+                        -- Kiểm tra xem có UI kết quả không
+                        local PlayerGui = game:GetService("Players").LocalPlayer:FindFirstChild("PlayerGui")
+                        if PlayerGui then
+                            local ResultUI = PlayerGui:FindFirstChild("ResultGui")
+                            if ResultUI and ResultUI.Enabled then
+                                wait(1) -- Đợi 1 giây trước khi retry
+                                performAutoRetry()
+                            end
+                        end
+                    end
+                end
+            end)
+        else
+            print("Auto Retry đã được tắt")
+        end
+    end
+}, "AutoRetryToggle")
+
+-- Toggle Auto Next
+sections.InGameSection:Toggle({
+    Name = "Auto Next",
+    Default = ConfigSystem.CurrentConfig.AutoNext or false,
+    Callback = function(Value)
+        autoNextEnabled = Value
+        ConfigSystem.CurrentConfig.AutoNext = Value
+        ConfigSystem.SaveConfig()
+        
+        if autoNextEnabled then
+            print("Auto Next đã được bật")
+            
+            -- Tạo vòng lặp để kiểm tra và next
+            spawn(function()
+                while autoNextEnabled and wait(1) do
+                    -- Kiểm tra xem người chơi có đang ở trong map không
+                    if isPlayerInMap() then
+                        -- Kiểm tra xem có UI kết quả không
+                        local PlayerGui = game:GetService("Players").LocalPlayer:FindFirstChild("PlayerGui")
+                        if PlayerGui then
+                            local ResultUI = PlayerGui:FindFirstChild("ResultGui")
+                            if ResultUI and ResultUI.Enabled then
+                                wait(1) -- Đợi 1 giây trước khi next
+                                performAutoNext()
+                            end
+                        end
+                    end
+                end
+            end)
+        else
+            print("Auto Next đã được tắt")
+        end
+    end
+}, "AutoNextToggle")
+
+-- Toggle Auto Vote MVP
+sections.InGameSection:Toggle({
+    Name = "Auto Vote MVP",
+    Default = ConfigSystem.CurrentConfig.AutoVote or false,
+    Callback = function(Value)
+        autoVoteEnabled = Value
+        ConfigSystem.CurrentConfig.AutoVote = Value
+        ConfigSystem.SaveConfig()
+        
+        if autoVoteEnabled then
+            print("Auto Vote MVP đã được bật")
+            
+            -- Tạo vòng lặp để kiểm tra và vote
+            spawn(function()
+                while autoVoteEnabled and wait(1) do
+                    -- Kiểm tra xem người chơi có đang ở trong map không
+                    if isPlayerInMap() then
+                        -- Kiểm tra xem có UI vote không
+                        local PlayerGui = game:GetService("Players").LocalPlayer:FindFirstChild("PlayerGui")
+                        if PlayerGui then
+                            local VoteUI = PlayerGui:FindFirstChild("VoteGui")
+                            if VoteUI and VoteUI.Enabled then
+                                wait(1) -- Đợi 1 giây trước khi vote
+                                performAutoVote()
+                            end
+                        end
+                    end
+                end
+            end)
+        else
+            print("Auto Vote MVP đã được tắt")
+        end
+    end
+}, "AutoVoteToggle")
+
+-- Toggle Remove Animation
+sections.InGameSection:Toggle({
+    Name = "Remove Animation",
+    Default = ConfigSystem.CurrentConfig.RemoveAnimation or true,
+    Callback = function(Value)
+        removeAnimationEnabled = Value
+        ConfigSystem.CurrentConfig.RemoveAnimation = Value
+        ConfigSystem.SaveConfig()
+        
+        if removeAnimationEnabled then
+            print("Remove Animation đã được bật")
+            
+            -- Thực hiện remove animation ngay lập tức
+            if isPlayerInMap() then
+                removeAnimation()
+            end
+            
+            -- Tạo vòng lặp để tiếp tục remove animation
+            spawn(function()
+                while removeAnimationEnabled and wait(5) do -- Mỗi 5 giây kiểm tra một lần
+                    if isPlayerInMap() then
+                        removeAnimation()
+                    end
+                end
+            end)
+        else
+            print("Remove Animation đã được tắt")
+        end
+    end
+}, "RemoveAnimationToggle")
+
+-- Nút Toggle AFK Mode
+sections.InGameSection:Button({
+    Name = "Toggle AFK Mode",
+    Callback = function()
+        -- Kiểm tra xem người chơi có đang ở trong map không
+        if not isPlayerInMap() then
+            Window:Notify({
+                Title = "Lỗi",
+                Description = "Bạn cần vào map trước khi bật/tắt AFK Mode",
+                Lifetime = 3
+            })
+            return
+        end
+        
+        -- Toggle AFK Mode
+        toggleAutoPlay(not autoPlayEnabled)
+        
+        -- Cập nhật trạng thái
+        autoPlayEnabled = not autoPlayEnabled
+        ConfigSystem.CurrentConfig.AutoPlay = autoPlayEnabled
+        ConfigSystem.SaveConfig()
+        
+        Window:Notify({
+            Title = "AFK Mode",
+            Description = "Đã " .. (autoPlayEnabled and "bật" or "tắt") .. " AFK Mode",
+            Lifetime = 3
+        })
+    end
+})
+
+-- Play Tab: Ranger Section (Ranger Stage)
+sections.RangerSection:Header({
+    Name = "Ranger Stage"
+})
+
+-- Hàm để lấy danh sách các act đã chọn
+local function getSelectedActs()
+    local result = {}
+    for act, selected in pairs(selectedActs) do
+        if selected then
+            table.insert(result, act)
+        end
+    end
+    return result
+end
+
+-- Hàm để lấy map tiếp theo trong danh sách đã chọn
+local function getNextSelectedRangerMap()
+    local mapList = {}
+    for map, selected in pairs(selectedRangerMaps) do
+        if selected then
+            table.insert(mapList, map)
+        end
+    end
+    
+    if #mapList == 0 then
+        -- Nếu không có map nào được chọn, sử dụng map mặc định
+        return selectedRangerMap
+    end
+    
+    -- Sắp xếp danh sách để đảm bảo thứ tự nhất quán
+    table.sort(mapList)
+    
+    -- Tìm map hiện tại trong danh sách
+    local currentIndex = 1
+    for i, map in ipairs(mapList) do
+        if map == selectedRangerMap then
+            currentIndex = i
+            break
+        end
+    end
+    
+    -- Lấy map tiếp theo trong danh sách
+    local nextIndex = (currentIndex % #mapList) + 1
+    return mapList[nextIndex]
+end
+
+-- Hàm để lấy act tiếp theo trong danh sách đã chọn
+local function getNextSelectedAct()
+    -- Cập nhật orderedActs nếu cần
+    orderedActs = getSelectedActs()
+    
+    if #orderedActs == 0 then
+        -- Nếu không có act nào được chọn, sử dụng RangerStage1
+        return "RangerStage1"
+    end
+    
+    -- Sắp xếp để đảm bảo thứ tự nhất quán
+    table.sort(orderedActs)
+    
+    -- Tăng index và kiểm tra giới hạn
+    currentActIndex = (currentActIndex % #orderedActs) + 1
+    return orderedActs[currentActIndex]
+end
+
+-- Hàm tham gia Ranger Stage
+local function joinRangerStage()
+    -- Kiểm tra xem người chơi đã ở trong map chưa
+    if isPlayerInMap() then
+        print("Đã phát hiện người chơi đang ở trong map, không thực hiện join Ranger Stage")
+        return false
+    end
+    
+    local success, err = pcall(function()
+        -- Lấy Event
+        local Event = safeGetPath(game:GetService("ReplicatedStorage"), {"Remote", "Server", "PlayRoom", "Event"}, 2)
+        
+        if not Event then
+            warn("Không tìm thấy Event để tham gia Ranger Stage")
+            return
+        end
+        
+        -- 1. Create
+        Event:FireServer("Create")
+        wait(0.5)
+        
+        -- 2. Friend Only (nếu được bật)
+        if rangerFriendOnly then
+            Event:FireServer("Change-FriendOnly")
+            wait(0.5)
+        end
+        
+        -- 3. Lấy map và act tiếp theo để tham gia
+        local nextMap = getNextSelectedRangerMap()
+        local nextAct = getNextSelectedAct()
+        
+        -- 3.1 Đổi Map
+        local args1 = {
+            [1] = "Change-World",
+            [2] = {
+                ["World"] = nextMap
+            }
+        }
+        Event:FireServer(unpack(args1))
+        wait(0.5)
+        
+        -- 3.2 Đổi Chapter - Trong trường hợp này là Ranger Stage Act
+        local args2 = {
+            [1] = "Change-Chapter",
+            [2] = {
+                ["Chapter"] = nextMap .. "_" .. nextAct
+            }
+        }
+        Event:FireServer(unpack(args2))
+        wait(0.5)
+        
+        -- 4. Submit
+        Event:FireServer("Submit")
+        wait(1)
+        
+        -- 5. Start
+        Event:FireServer("Start")
+        
+        -- Cập nhật lại biến lưu trạng thái hiện tại
+        selectedRangerMap = nextMap
+        
+        print("Đã join Ranger Stage: " .. nextMap .. "_" .. nextAct)
+        
+        -- Cập nhật cấu hình
+        ConfigSystem.CurrentConfig.SelectedRangerMap = nextMap
+        ConfigSystem.SaveConfig()
+    end)
+    
+    if not success then
+        warn("Lỗi khi join Ranger Stage: " .. tostring(err))
+        return false
+    end
+    
+    return true
+end
+
+-- Dropdown để chọn nhiều Map
+sections.RangerSection:Dropdown({
+    Name = "Choose Maps",
+    Options = mapOptions,
+    Multi = true,
+    Default = {},
+    Callback = function(Values)
+        -- Cập nhật danh sách map đã chọn
+        selectedRangerMaps = {}
+        for _, displayName in pairs(Values) do
+            local realName = mapNameMapping[displayName]
+            if realName then
+                selectedRangerMaps[realName] = true
+            end
+        end
+        
+        -- Đảm bảo luôn có ít nhất một map được chọn
+        if not next(selectedRangerMaps) then
+            -- Nếu không có map nào được chọn, sử dụng map mặc định
+            selectedRangerMaps[selectedRangerMap] = true
+        end
+        
+        -- Cập nhật cấu hình
+        ConfigSystem.CurrentConfig.SelectedRangerMaps = selectedRangerMaps
+        ConfigSystem.SaveConfig()
+        
+        print("Đã chọn " .. #Values .. " map cho Ranger Stage")
+    end
+}, "RangerMapsDropdown")
+
+-- Dropdown để chọn nhiều Acts
+local actOptions = {"RangerStage1", "RangerStage2", "RangerStage3", "RangerStage4", "RangerStage5"}
+sections.RangerSection:Dropdown({
+    Name = "Choose Acts",
+    Options = actOptions,
+    Multi = true,
+    Default = {},
+    Callback = function(Values)
+        -- Cập nhật danh sách acts đã chọn
+        selectedActs = {}
+        for _, act in pairs(Values) do
+            selectedActs[act] = true
+        end
+        
+        -- Đảm bảo luôn có ít nhất một act được chọn
+        if not next(selectedActs) then
+            -- Nếu không có act nào được chọn, sử dụng act mặc định
+            selectedActs["RangerStage1"] = true
+        end
+        
+        -- Cập nhật orderedActs và reset currentActIndex
+        orderedActs = getSelectedActs()
+        currentActIndex = 1
+        
+        -- Cập nhật cấu hình
+        ConfigSystem.CurrentConfig.SelectedActs = selectedActs
+        ConfigSystem.SaveConfig()
+        
+        print("Đã chọn " .. #Values .. " acts cho Ranger Stage")
+    end
+}, "RangerActsDropdown")
+
+-- Toggle Friend Only cho Ranger Stage
+sections.RangerSection:Toggle({
+    Name = "Friend Only",
+    Default = ConfigSystem.CurrentConfig.RangerFriendOnly or false,
+    Callback = function(Value)
+        rangerFriendOnly = Value
+        ConfigSystem.CurrentConfig.RangerFriendOnly = Value
+        ConfigSystem.SaveConfig()
+        
+        if Value then
+            print("Đã bật chế độ Friend Only cho Ranger Stage")
+        else
+            print("Đã tắt chế độ Friend Only cho Ranger Stage")
+        end
+    end
+}, "RangerFriendOnlyToggle")
+
+-- Toggle Auto Join Ranger
+sections.RangerSection:Toggle({
+    Name = "Auto Join Ranger",
+    Default = ConfigSystem.CurrentConfig.AutoJoinRanger or false,
+    Callback = function(Value)
+        autoJoinRangerEnabled = Value
+        ConfigSystem.CurrentConfig.AutoJoinRanger = Value
+        ConfigSystem.SaveConfig()
+        
+        if autoJoinRangerEnabled then
+            print("Auto Join Ranger đã được bật")
+            
+            -- Kiểm tra ngay lập tức nếu người chơi đang ở trong map
+            if isPlayerInMap() then
+                print("Đang ở trong map, Auto Join Ranger sẽ hoạt động khi bạn rời khỏi map")
+            else
+                print("Auto Join Ranger sẽ bắt đầu sau " .. rangerTimeDelay .. " giây")
+                
+                -- Thực hiện join Ranger sau thời gian delay
+                spawn(function()
+                    wait(rangerTimeDelay) -- Chờ theo time delay đã đặt
+                    if autoJoinRangerEnabled and not isPlayerInMap() then
+                        joinRangerStage()
+                    end
+                end)
+            end
+            
+            -- Tạo vòng lặp Auto Join Ranger
+            spawn(function()
+                while autoJoinRangerEnabled and wait(10) do -- Thử join mỗi 10 giây
+                    -- Chỉ thực hiện join nếu người chơi không ở trong map
+                    if not isPlayerInMap() then
+                        -- Áp dụng time delay
+                        print("Đợi " .. rangerTimeDelay .. " giây trước khi join Ranger")
+                        wait(rangerTimeDelay)
+                        
+                        -- Kiểm tra lại sau khi delay
+                        if autoJoinRangerEnabled and not isPlayerInMap() then
+                            joinRangerStage()
+                        end
+                    else
+                        -- Người chơi đang ở trong map, không cần join
+                        print("Đang ở trong map, đợi đến khi người chơi rời khỏi map")
+                    end
+                end
+            end)
+        else
+            print("Auto Join Ranger đã được tắt")
+        end
+    end
+}, "AutoJoinRangerToggle")
+
+-- Input cho Ranger Time Delay
+sections.RangerSection:Input({
+    Name = "Ranger Time Delay (1-30s)",
+    Placeholder = "Nhập delay",
+    Default = tostring(rangerTimeDelay),
+    Callback = function(Value)
+        local numValue = tonumber(Value)
+        if numValue and numValue >= 1 and numValue <= 30 then
+            rangerTimeDelay = numValue
+            ConfigSystem.CurrentConfig.RangerTimeDelay = numValue
+            ConfigSystem.SaveConfig()
+            print("Đã đặt Ranger Time Delay: " .. numValue .. " giây")
+        else
+            print("Giá trị delay không hợp lệ (1-30)")
+            Window:Notify({
+                Title = "Lỗi",
+                Description = "Giá trị delay không hợp lệ (1-30)",
+                Lifetime = 3
+            })
+        end
+    end
+}, "RangerTimeDelayInput")
+
+-- Toggle Auto Leave
+local autoLeaveEnabled = ConfigSystem.CurrentConfig.AutoLeave or false
+
+sections.RangerSection:Toggle({
+    Name = "Auto Leave",
+    Default = autoLeaveEnabled,
+    Callback = function(Value)
+        autoLeaveEnabled = Value
+        ConfigSystem.CurrentConfig.AutoLeave = Value
+        ConfigSystem.SaveConfig()
+        
+        if Value then
+            print("Auto Leave đã được bật")
+            
+            -- Tạo vòng lặp để theo dõi trạng thái
+            spawn(function()
+                while autoLeaveEnabled and wait(2) do
+                    -- Kiểm tra xem người chơi có đang ở trong map không
+                    if isPlayerInMap() then
+                        -- Kiểm tra xem có UI kết quả không
+                        local PlayerGui = game:GetService("Players").LocalPlayer:FindFirstChild("PlayerGui")
+                        if PlayerGui then
+                            local ResultUI = PlayerGui:FindFirstChild("ResultGui")
+                            if ResultUI and ResultUI.Enabled then
+                                -- Tự động rời khỏi game sau khi hiển thị kết quả
+                                local args = {
+                                    [1] = "Leave"
+                                }
+                                
+                                local Event = safeGetPath(game:GetService("ReplicatedStorage"), {"Remote", "Server", "Gameplay", "Event"}, 2)
+                                if Event then
+                                    wait(2) -- Đợi 2 giây trước khi leave
+                                    Event:FireServer(unpack(args))
+                                    print("Đã thực hiện Auto Leave")
+                                end
+                            end
+                        end
+                    end
+                end
+            end)
+        else
+            print("Auto Leave đã được tắt")
+        end
+    end
+}, "AutoLeaveToggle")
+
+-- Nút Join Ranger Now (thủ công)
+sections.RangerSection:Button({
+    Name = "Join Ranger Now",
+    Callback = function()
+        -- Kiểm tra nếu người chơi đang ở trong map
+        if isPlayerInMap() then
+            Window:Notify({
+                Title = "Lỗi",
+                Description = "Bạn đang ở trong map, không thể tham gia Ranger Stage mới",
+                Lifetime = 3
+            })
+            return
+        end
+        
+        print("Đang tham gia Ranger Stage...")
+        joinRangerStage()
+    end
+})
