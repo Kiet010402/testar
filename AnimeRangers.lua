@@ -33,14 +33,14 @@ end
 
 -- Tải MacLib
 local success, err = pcall(function()
-    loadstring(game:HttpGet("https://github.com/biggaboy212/Maclib/raw/main/Maclib.lua"))()
+    loadstring(game:HttpGet("https://github.com/biggaboy212/Maclib/releases/latest/download/maclib.txt"))()
 end)
 
 if not success then
     warn("Lỗi khi tải thư viện MacLib: " .. tostring(err))
     -- Thử tải từ URL dự phòng
     pcall(function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/biggaboy212/Maclib/main/Maclib.lua"))()
+        loadstring(game:HttpGet("https://github.com/biggaboy212/Maclib/releases/latest/download/maclib.txt"))()
     end)
 end
 
